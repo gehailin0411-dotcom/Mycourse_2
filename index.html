@@ -1,0 +1,366 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agentic Workflows</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&family=Mulish:wght@400;500;600;700&display=swap">
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    font-family: 'Mulish', system-ui, sans-serif;
+    background: oklch(97% 0.015 300);
+    color: oklch(30% 0.03 290);
+  }
+  a { color: oklch(68% 0.12 300); }
+  a:hover { color: oklch(58% 0.12 300); }
+
+  .app { display: flex; min-height: 100vh; }
+
+  .sidebar {
+    width: 280px;
+    flex-shrink: 0;
+    background: oklch(99% 0.01 300);
+    border-right: 1px solid oklch(92% 0.02 300);
+    padding: 32px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+  }
+
+  .brand { display: flex; align-items: center; gap: 10px; color: oklch(68% 0.12 300); }
+  .brand span {
+    font-family: 'Sora', sans-serif;
+    font-weight: 700;
+    font-size: 18px;
+    color: oklch(30% 0.03 290);
+  }
+
+  .progress-dots { display: flex; align-items: center; gap: 6px; }
+  .progress-dot {
+    width: 22px;
+    height: 22px;
+    border-radius: 999px;
+    border: none;
+    background: oklch(90% 0.02 300);
+    cursor: pointer;
+    padding: 0;
+    position: relative;
+    flex-shrink: 0;
+  }
+  .progress-dot.done { background: oklch(68% 0.12 180); }
+  .progress-dot.done::after {
+    content: '\2713';
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 12px;
+  }
+  .progress-dot.current {
+    background: oklch(68% 0.12 300);
+    box-shadow: 0 0 0 3px oklch(89% 0.045 300);
+  }
+
+  .toc { display: flex; flex-direction: column; gap: 6px; }
+  .toc-item {
+    text-align: left;
+    background: none;
+    border: none;
+    font-family: 'Mulish', sans-serif;
+    font-size: 14px;
+    color: oklch(48% 0.03 290);
+    padding: 11px 14px;
+    border-radius: 999px;
+    cursor: pointer;
+  }
+  .toc-item:hover { background: oklch(93% 0.02 300); }
+  .toc-item.active {
+    background: oklch(89% 0.045 300);
+    color: oklch(38% 0.08 300);
+    font-weight: 700;
+  }
+
+  .content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 56px 64px;
+    min-width: 0;
+  }
+
+  .sections-wrap { flex: 1; }
+  .lesson-section { max-width: 680px; }
+
+  .eyebrow {
+    display: inline-flex;
+    font-size: 12px;
+    font-weight: 700;
+    color: oklch(45% 0.1 180);
+    background: oklch(92% 0.05 180);
+    padding: 6px 14px;
+    border-radius: 999px;
+    margin-bottom: 20px;
+  }
+
+  .lesson-section h1 {
+    margin: 0 0 20px;
+    font-family: 'Sora', sans-serif;
+    font-weight: 700;
+    font-size: 32px;
+    line-height: 1.2;
+    color: oklch(28% 0.03 290);
+  }
+  .lesson-section p {
+    margin: 0 0 18px;
+    font-size: 16px;
+    line-height: 1.75;
+    color: oklch(35% 0.02 290);
+  }
+  .lesson-section ul {
+    margin: 0 0 18px;
+    padding-left: 22px;
+  }
+  .lesson-section li {
+    margin-bottom: 8px;
+    font-size: 16px;
+    line-height: 1.7;
+    color: oklch(35% 0.02 290);
+  }
+
+  .callout {
+    padding: 22px 26px;
+    background: oklch(99% 0.01 300);
+    border: 2px solid oklch(89% 0.045 300);
+    border-radius: 18px;
+    margin: 24px 0;
+  }
+  .callout-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 8px;
+    font-family: 'Sora', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    color: oklch(48% 0.12 300);
+  }
+  .callout p { margin: 0; color: oklch(32% 0.03 290); }
+
+  .lesson-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 680px;
+    padding-top: 24px;
+    margin-top: 24px;
+    border-top: 1px solid oklch(90% 0.02 300);
+  }
+  .nav-btn {
+    font-family: 'Mulish', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+    padding: 12px 22px;
+    border-radius: 999px;
+  }
+  .nav-btn.prev { color: oklch(48% 0.03 290); background: oklch(93% 0.02 300); }
+  .nav-btn.next { color: #fff; background: oklch(68% 0.12 300); padding: 12px 24px; }
+  .nav-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  @media (max-width: 800px) {
+    .app { flex-direction: column; }
+    .sidebar {
+      width: 100%;
+      height: auto;
+      position: static;
+      border-right: none;
+      border-bottom: 1px solid oklch(92% 0.02 300);
+    }
+    .content { padding: 32px 24px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="12" cy="18" r="2.5"/><path d="M8.2 7.4 10 16.2M15.8 7.4 14 16.2M8.5 6h7"/></svg>
+      <span>Agentic Workflows</span>
+    </div>
+
+    <div class="progress-dots" id="progress-dots"></div>
+
+    <nav class="toc" id="toc"></nav>
+  </aside>
+
+  <main class="content">
+    <div class="sections-wrap" id="sections-wrap">
+
+      <section id="section-1" class="lesson-section">
+        <div class="eyebrow">Lesson 1 of 5</div>
+        <h1>What Is an AI Agent?</h1>
+        <p>You've probably used a chatbot: you type a question, and it types back an answer. Under the hood, that's a large language model, or LLM — a program trained on huge amounts of text that has learned to predict what words should come next, well enough to hold a convincing conversation. Give it a prompt, and it gives you a reply. One turn, then it's done.</p>
+        <p>An AI agent is built on top of an LLM, but it does more than talk — it acts. Instead of only producing a reply, an agent can look things up, run a calculation, write and run code, or trigger a real action on your behalf, and then use whatever it finds to decide what to do next. It doesn't just answer once; it works.</p>
+        <div class="callout">
+          <div class="callout-label">Key idea</div>
+          <p>An <strong>agentic workflow</strong> is a process where the AI doesn't just answer a question once, but works through a task in steps — checking its own progress, adjusting when something doesn't go as planned, and continuing until the goal is actually met.</p>
+        </div>
+        <p>Compare "What's my flight status?" to "Rebook my flight if it's delayed." The first is a single question with a single answer. The second requires the system to check the status, reason about what that result means, and then decide whether to take a further action — rebooking. That extra loop of checking, deciding, and acting is exactly what the rest of this course is about.</p>
+      </section>
+
+      <section id="section-2" class="lesson-section" hidden>
+        <div class="eyebrow">Lesson 2 of 5</div>
+        <h1>How Agents Take Action</h1>
+        <p>An agent's actions come from <strong>tools</strong> — functions or services it's allowed to call, such as a web search, a calculator, a piece of code it can run, a database it can query, or an email it can send. The language model itself still can't do any of these things directly; what it can do is decide, based on the situation, which tool to use and when.</p>
+        <p>That decision-making follows a simple loop that repeats until the task is finished:</p>
+        <ul>
+          <li><strong>Observe</strong> — take in the current situation: the user's request, and the result of whatever happened last.</li>
+          <li><strong>Decide</strong> — reason about what needs to happen next to make progress.</li>
+          <li><strong>Act</strong> — call a tool, or produce a final answer if nothing more is needed.</li>
+        </ul>
+        <p>Then the loop starts again with whatever the tool returned. Ask an agent to summarize the latest news on a topic, and it might decide to search the web (act), read through the results (observe), decide it needs a second, more specific search (decide, act again), and only once it has enough to work with does it write the summary.</p>
+        <div class="callout">
+          <div class="callout-label">Key idea</div>
+          <p>The important part isn't the tools themselves — it's that the model decides which one to use and when, based on its own reasoning, rather than a programmer hard-coding every possible case in advance.</p>
+        </div>
+      </section>
+
+      <section id="section-3" class="lesson-section" hidden>
+        <div class="eyebrow">Lesson 3 of 5</div>
+        <h1>Planning Multi-Step Tasks</h1>
+        <p>Real goals are rarely one step. "Plan a weekend trip to Kyoto" isn't a single lookup — it means checking flights, checking hotel availability, checking the weather, and then pulling all of that into an itinerary. Some of those steps depend on the results of earlier ones: there's no point comparing hotels near the airport until you know which flights are actually available.</p>
+        <p>To handle this, an agent typically drafts a rough plan up front — a rough sequence of sub-tasks — and then works through it one step at a time. Crucially, that plan isn't fixed: if a step turns out to be impossible (the flights on the planned dates are sold out), the agent revises the remaining plan around that new information, rather than failing outright.</p>
+        <div class="callout">
+          <div class="callout-label">Key idea</div>
+          <p>This is a real shift from older, scripted software. A traditional program follows a decision tree a developer wrote out in advance for every case. An agent forms its own plan for the specific task in front of it, and reworks that plan as things change along the way.</p>
+        </div>
+        <p>This is also why the "act, then observe the result" loop from the last lesson matters so much for planning: each action doesn't just move the task forward, it also tells the agent whether the rest of its plan still makes sense.</p>
+      </section>
+
+      <section id="section-4" class="lesson-section" hidden>
+        <div class="eyebrow">Lesson 4 of 5</div>
+        <h1>Memory &amp; Context</h1>
+        <p>An LLM can only "see" a limited amount of text at once — its <strong>context window</strong>. Everything relevant to the task — the original instructions, the steps taken so far, the results of any tool calls — has to fit inside that window. On a long, multi-step task, that adds up fast.</p>
+        <p>So instead of keeping every raw detail forever, an agent needs to manage what it remembers: condensing progress into notes, keeping only what's still relevant, and setting aside the rest. This is usually split into two kinds of memory:</p>
+        <ul>
+          <li><strong>Short-term memory</strong> — what's happened so far within the current task, like which searches it already ran and what they turned up.</li>
+          <li><strong>Long-term memory</strong> — information saved outside the conversation itself, often in an external store the agent can search back through, so it can be recalled in a future session (for example, a user's stated preferences from last week).</li>
+        </ul>
+        <div class="callout">
+          <div class="callout-label">Key idea</div>
+          <p>Without memory, an agent tends to repeat work it's already done, contradict itself, or simply lose track of the goal partway through a long task. Good memory management is what lets an agent stay coherent over many steps, not just one.</p>
+        </div>
+      </section>
+
+      <section id="section-5" class="lesson-section" hidden>
+        <div class="eyebrow">Lesson 5 of 5</div>
+        <h1>Agents Working Together</h1>
+        <p>Some tasks are big enough that one agent handling everything does a mediocre job of all of it — much like one person can't be an expert researcher, coder, and editor all at once. The common answer is to split the work across multiple specialized agents that each focus on one part of the job.</p>
+        <p>A typical pattern has one agent acting as a coordinator: it breaks the overall goal into pieces, hands each piece to an agent suited for it, and then combines their results into a final answer. A research task, for instance, might involve a research agent that gathers sources, a writing agent that drafts a report from them, and a reviewing agent that checks the draft before it's returned.</p>
+        <p>This kind of multi-agent teamwork already shows up in practice:</p>
+        <ul>
+          <li>Coding assistants that plan a change, write the code, then run and check the tests in a loop.</li>
+          <li>Customer support systems that route different kinds of questions to different specialist agents.</li>
+          <li>Research assistants that gather sources with one agent and draft a report with another.</li>
+        </ul>
+        <div class="callout">
+          <div class="callout-label">Key idea</div>
+          <p>Put together, what an agent is, how it takes action, how it plans, how it remembers, and how agents can team up — that's the full picture of what people mean by an <strong>agentic workflow</strong>: a system that goes from a request to a finished result through its own reasoning, not a fixed script.</p>
+        </div>
+      </section>
+
+    </div>
+
+    <div class="lesson-nav">
+      <button id="prev-btn" class="nav-btn prev">&larr; Previous</button>
+      <button id="next-btn" class="nav-btn next">Next &rarr;</button>
+    </div>
+  </main>
+</div>
+
+<script>
+(function () {
+  var sections = [
+    { id: 'section-1', title: 'What Is an AI Agent?' },
+    { id: 'section-2', title: 'How Agents Take Action' },
+    { id: 'section-3', title: 'Planning Multi-Step Tasks' },
+    { id: 'section-4', title: 'Memory & Context' },
+    { id: 'section-5', title: 'Agents Working Together' }
+  ];
+
+  var sectionEls = sections.map(function (s) { return document.getElementById(s.id); });
+  var tocEl = document.getElementById('toc');
+  var dotsEl = document.getElementById('progress-dots');
+  var prevBtn = document.getElementById('prev-btn');
+  var nextBtn = document.getElementById('next-btn');
+  var sectionsWrap = document.getElementById('sections-wrap');
+
+  var visited = {};
+  var current = 0;
+
+  sections.forEach(function (s, i) {
+    var btn = document.createElement('button');
+    btn.className = 'toc-item';
+    btn.textContent = s.title;
+    btn.addEventListener('click', function () { goTo(i); });
+    tocEl.appendChild(btn);
+
+    var dot = document.createElement('button');
+    dot.className = 'progress-dot';
+    dot.setAttribute('aria-label', s.title);
+    dot.addEventListener('click', function () { goTo(i); });
+    dotsEl.appendChild(dot);
+  });
+
+  var tocItems = tocEl.children;
+  var dotItems = dotsEl.children;
+
+  function render() {
+    sectionEls.forEach(function (el, i) { el.hidden = i !== current; });
+    for (var i = 0; i < tocItems.length; i++) {
+      tocItems[i].classList.toggle('active', i === current);
+    }
+    for (var j = 0; j < dotItems.length; j++) {
+      dotItems[j].classList.toggle('current', j === current);
+      dotItems[j].classList.toggle('done', !!visited[j] && j !== current);
+    }
+    prevBtn.disabled = current === 0;
+    nextBtn.disabled = current === sections.length - 1;
+    location.hash = sections[current].id;
+    sectionsWrap.scrollTop = 0;
+    window.scrollTo(0, 0);
+  }
+
+  function goTo(i) {
+    if (i < 0 || i >= sections.length) return;
+    visited[current] = true;
+    current = i;
+    render();
+  }
+
+  prevBtn.addEventListener('click', function () { goTo(current - 1); });
+  nextBtn.addEventListener('click', function () { goTo(current + 1); });
+
+  window.addEventListener('hashchange', function () {
+    var idx = sections.findIndex(function (s) { return '#' + s.id === location.hash; });
+    if (idx !== -1 && idx !== current) goTo(idx);
+  });
+
+  var initialIdx = sections.findIndex(function (s) { return '#' + s.id === location.hash; });
+  current = initialIdx !== -1 ? initialIdx : 0;
+  render();
+})();
+</script>
+
+</body>
+</html>
